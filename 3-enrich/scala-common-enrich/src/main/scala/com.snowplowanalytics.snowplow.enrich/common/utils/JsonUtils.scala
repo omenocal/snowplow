@@ -185,6 +185,7 @@ object JsonUtils {
 
   /**
    * Converts a JSON string into a Validation[String, JsonNode]
+   * Version 2.6.7 of jackson can send back null instead of exception here
    *
    * @param field The name of the field containing JSON
    * @param instance The JSON string to parse
@@ -193,7 +194,8 @@ object JsonUtils {
    */
   def extractJson(field: String, instance: String): Validation[String, JsonNode] =
     try {
-      Mapper.readTree(instance).success
+      Option(Mapper.readTree(instance))
+        .toSuccess(s"Field [$field]: invalid JSON [$instance] with parsing error: mapping resulted in null")
     } catch {
       case e: Throwable =>
         s"Field [$field]: invalid JSON [$instance] with parsing error: ${stripInstanceEtc(e.getMessage).orNull}".fail
